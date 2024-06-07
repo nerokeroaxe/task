@@ -1,54 +1,64 @@
+import { isNullOrEmpty } from "../infrastructure/stringFunc";
 import IOrder from "./contracts/orderInterface";
 import { OrderStatus, isNextStatusValid } from "./support/orderStatus";
 
 export default class Order {
-    private _title: string;
-    private _description: string;
-    private _creationTime: Date;
-    private _updateTime?: Date;
-    private _status: OrderStatus;
+    private title: string;
+    private description: string;
+    private creationTime: Date;
+    private updateTime?: Date;
+    private status: OrderStatus;
 
     constructor(order: IOrder) {
-        this._title = order.title;
-        this._description = order.description;
-        this._creationTime = order.creationTime ?? new Date();
-        this._updateTime = order.updateTime;
-        this._status = order.status ?? OrderStatus.Accepted;
+        this.title = order.title;
+        this.description = order.description;
+        this.creationTime = order.creationTime ?? new Date();
+        this.updateTime = order.updateTime;
+        this.status = order.status ?? OrderStatus.Accepted;
     }
+
+    equals(order: Order): boolean {
+        return this.title === order.title 
+            && this.description === order.description
+            && this.status === order.status
+            && this.creationTime.getTime() === order.creationTime.getTime()
+            && this.updateTime?.getTime() === order.updateTime?.getTime();
+    }
+
     // title
-    get title(): string {
-        return this._title;
+    getTitle(): string {
+        return this.title;
     }
-    set title(value: string) {
-        if (value && !(value.trim().length > 0)) {
-            this._title = value;
+    setTitle(value: string) {
+        if (!isNullOrEmpty(value)) {
+            this.title = value;
         }
     }
     // description
-    get description(): string {
-        return this._description;
+    getDescription(): string {
+        return this.description;
     }
-    set description(value: string) {
-        if (value && !(value.trim().length > 0)) {
-            this._description = value;
+    setDescription(value: string) {
+        if (!isNullOrEmpty(value)) {
+            this.description = value;
         }
     }
     // creation time
-    get creationTime(): Date {
-        return this._creationTime;
+    getCreationTime(): Date {
+        return this.creationTime;
     }
     // update time
-    get updateTime(): Date | undefined {
-        return this._updateTime;
+    getUpdateTime(): Date | undefined {
+        return this.updateTime;
     }
     // status
-    get status(): OrderStatus {
-        return this._status;
+    getStatus(): OrderStatus {
+        return this.status;
     }
-    set status(value: OrderStatus) {
-        if (isNextStatusValid(this._status, value)) {
-            this._status = value;
-            this._updateTime = new Date();
+    setStatus(value: OrderStatus) {
+        if (isNextStatusValid(this.status, value)) {
+            this.status = value;
+            this.updateTime = new Date();
         }
     }
 }

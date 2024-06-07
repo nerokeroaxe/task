@@ -1,6 +1,6 @@
 export enum OrderStatus {
     Accepted = 'Accepted',
-    InProcess = 'InProcess',
+    InWork = 'In work',
     Ready = 'Ready',
     Delivery = 'Delivery',
     Closed = 'Closed'
@@ -9,8 +9,8 @@ export enum OrderStatus {
 type AllowedTransation = { current: OrderStatus, next?: OrderStatus[] }
 // Пути из одного статуса в другой
 const allowedTransitions: AllowedTransation[] = [
-    { current: OrderStatus.Accepted, next: [OrderStatus.InProcess] },
-    { current: OrderStatus.InProcess, next: [OrderStatus.Ready] },
+    { current: OrderStatus.Accepted, next: [OrderStatus.InWork] },
+    { current: OrderStatus.InWork, next: [OrderStatus.Ready] },
     { current: OrderStatus.Ready, next: [OrderStatus.Delivery, OrderStatus.Closed] },
     { current: OrderStatus.Delivery, next: [OrderStatus.Closed] },
     { current: OrderStatus.Closed }
