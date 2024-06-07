@@ -1,3 +1,4 @@
+import IOrder from "../../models/contracts/orderInterface";
 import Order from "../../models/order";
 import IOrderRepository from "../contracts/orderRepositoryInterface";
 
@@ -6,11 +7,11 @@ export namespace LocalStorage {
         private readonly _prefix: string = "order_";
         create(order: Order): void {
             let orderJSON: string = JSON.stringify(order);
-            localStorage.setItem(this._prefix + order.title, orderJSON);
+            localStorage.setItem(this._prefix + order.getTitle(), orderJSON);
         }
         get(title: string): Order | null {
             const orderJSON = localStorage.getItem(this._prefix + title);
-            return orderJSON ? JSON.parse(orderJSON) as Order : null;
+            return orderJSON ? new Order(JSON.parse(orderJSON) as IOrder) : null;
         }
         getList(): Order[] {
             let orders: Order[] = [];
@@ -23,27 +24,27 @@ export namespace LocalStorage {
 
                 let orderJSON = localStorage.getItem(key);
                 if (orderJSON) {
-                    orders.push(JSON.parse(orderJSON) as Order);
+                    orders.push(new Order(JSON.parse(orderJSON) as IOrder));
                 }
             }
             return orders;
         }
         update(title: string, order: Order): void {
             let orderJSON: string = JSON.stringify(order);
-            if (order.title == title) {
+            if (order.getTitle() == title) {
                 localStorage.setItem(this._prefix + title, orderJSON);
             } else {
                 // если заголовок изменился, то удаляем старую запись
                 // и создаем новую
                 localStorage.removeItem(this._prefix + title);
-                localStorage.setItem(this._prefix + order.title, orderJSON);
+                localStorage.setItem(this._prefix + order.getTitle(), orderJSON);
             }
         }
         delete(title: string): Order | null {
             let order = localStorage.getItem(this._prefix + title);
             if (order) {
                 localStorage.removeItem(this._prefix + title);
-                return JSON.parse(order) as Order;
+                return new Order(JSON.parse(order) as IOrder);
             }
             return null;
         }
