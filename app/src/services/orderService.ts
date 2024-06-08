@@ -1,7 +1,7 @@
 import { isNullOrEmpty } from "../infrastructure/stringFunc";
 import ValidationError from "../infrastructure/validationError";
-import IOrder from "../models/contracts/orderInterface";
 import Order from "../models/order";
+import { OrderStatus } from "../models/support/orderStatus";
 import IOrderRepository from "../repositories/contracts/orderRepositoryInterface";
 import IOrderService from "./contracts/orderServiceInterface";
 
@@ -10,23 +10,35 @@ export default class OrderService implements IOrderService {
     constructor(orderRepository: IOrderRepository) {
         this._orderRepository = orderRepository;
     }
+    takeOrderInWork(title: string): void {
+        this.changeStatus(title, OrderStatus.InWork);
+    }
+    readyOrder(title: string): void {
+        this.changeStatus(title, OrderStatus.Ready);
+    }
+    deliveryOrder(title: string): void {
+        this.changeStatus(title, OrderStatus.Delivery);
+    }
+    closeOrder(title: string): void {
+        this.changeStatus(title, OrderStatus.Closed);
+    }
 
-    create(order: Order): void {
-        if (isNullOrEmpty(order.getTitle())) {
+    create(title: string, description: string): void {
+        if (isNullOrEmpty(title)) {
             throw new ValidationError("Заголовок не может быть пустым");
         }
-        if (isNullOrEmpty(order.getDescription())) {
+        if (isNullOrEmpty(description)) {
             throw new ValidationError("Описание не может быть пустым");
         }
-        let oldOrder = this._orderRepository.get(order.getTitle());
+        let oldOrder = this._orderRepository.get(title);
         if (oldOrder) {
             throw new ValidationError("Запись с таким заголовком уже существует");
         }
-        
+        let order = new Order({title, description});
         this._orderRepository.create(order);
     }
 
-    get(title: string): Order | null {
+    get(title: string): Order | null{
         if (isNullOrEmpty(title)) {
             throw new ValidationError("Заголовок не может быть пустым");
         }
@@ -38,13 +50,7 @@ export default class OrderService implements IOrderService {
     }
     
     update(title: string, order: Order): void {
-        if (isNullOrEmpty(title)) {
-            throw new ValidationError("Заголовок не может быть пустым");
-        }
-        let oldOrder = this._orderRepository.get(title);
-        if (!oldOrder) {
-            throw new ValidationError("Запись с таким заголовком не существует");
-        }
+        let oldOrder: Order = this.check(title);
         
         // Если нет изменений, то ничего не делаем
         if (oldOrder.equals(order)) {
@@ -53,7 +59,7 @@ export default class OrderService implements IOrderService {
         this._orderRepository.update(title, order);
     }
     
-    delete(title: string): Order | null {
+    delete(title: string): Order {
         if (isNullOrEmpty(title)) {
             throw new ValidationError("Заголовок не может быть пустым");
         }
@@ -61,7 +67,32 @@ export default class OrderService implements IOrderService {
         if (!oldOrder) {
             throw new ValidationError("Запись с таким заголовком не существует");
         }
-        return this._orderRepository.delete(title);
+        let result = this._orderRepository.delete(title);
+        if (!result) {
+            throw new Error("Не удалось удалить запись");
+        }
+        return result;
+    }
+
+    private check(title: string): Order {
+        if (isNullOrEmpty(title)) {
+            throw new ValidationError("Заголовок не может быть пустым");
+        }
+        let oldOrder = this._orderRepository.get(title);
+        if (!oldOrder) {
+            throw new ValidationError("Запись с таким заголовком не существует");
+        }
+        return oldOrder;
+    }
+    private changeStatus(title: string, status: OrderStatus): void {
+        let order: Order = this.check(title);
+        let oldStatus = order.getStatus();
+        order.setStatus(status);
+        if (oldStatus === order.getStatus()) {
+            throw new ValidationError(`Нельзя перейти из статуса ${oldStatus} в ${status}`);
+        }
+
+        this._orderRepository.update(title, order);
     }
 
 }
